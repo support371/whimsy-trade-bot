@@ -22,29 +22,27 @@ serve(async (req) => {
       });
     }
 
-    // Verify the JWT token
+    // Verify the JWT token using getClaims
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
       global: {
         headers: { Authorization: authHeader },
       },
     });
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      console.log('Invalid token:', authError?.message);
+    const token = authHeader.replace('Bearer ', '');
+    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      console.log('Invalid token:', claimsError?.message);
       return new Response(JSON.stringify({ error: 'Invalid token' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    console.log('Authenticated user:', user.id);
+    const userId = claimsData.claims.sub;
+    console.log('Authenticated user:', userId);
 
     const { priceData, signal, riskScore } = await req.json();
     
