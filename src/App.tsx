@@ -8,6 +8,8 @@ import { AuthBannerProvider } from "@/contexts/AuthBannerContext";
 import { AuthBanner } from "@/components/AuthBanner";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
+import Portfolio from "./pages/Portfolio";
+import Alerts from "./pages/Alerts";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -29,6 +31,22 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <Index />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/portfolio" 
+                element={
+                  <ProtectedRoute>
+                    <Portfolio />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/alerts" 
+                element={
+                  <ProtectedRoute>
+                    <Alerts />
                   </ProtectedRoute>
                 } 
               />
