@@ -70,13 +70,14 @@ export interface SystemHealth {
   daily_pnl: number;
   unrealized_pnl: number;
   realized_pnl: number;
-  trading_mode: TradingMode;
-  system_status: 'OPERATIONAL' | 'HALTED';
-  thresholds: {
+  last_health_check?: string;
+  trading_mode?: TradingMode;
+  system_status?: 'OPERATIONAL' | 'HALTED';
+  thresholds?: {
     max_api_errors: number;
     max_failed_orders: number;
   };
-  stats: {
+  stats?: {
     orders_today: number;
     rejections_today: number;
   };

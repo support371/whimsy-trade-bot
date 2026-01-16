@@ -1,11 +1,15 @@
-import { Activity, Wallet, Bell, LayoutDashboard } from 'lucide-react';
+import { Activity, Wallet, Bell, LayoutDashboard, TrendingUp, Settings, FileText } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
 const navItems = [
-  { path: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { path: '/', label: 'Home', icon: LayoutDashboard },
+  { path: '/dashboard', label: 'Dashboard', icon: Activity },
+  { path: '/trade', label: 'Trade', icon: TrendingUp },
   { path: '/portfolio', label: 'Portfolio', icon: Wallet },
   { path: '/alerts', label: 'Alerts', icon: Bell },
+  { path: '/config', label: 'Config', icon: Settings },
+  { path: '/status', label: 'Status', icon: FileText },
 ];
 
 export function Navigation() {
