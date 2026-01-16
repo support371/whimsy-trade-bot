@@ -1,12 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { invokeEdgeFunction } from '@/lib/invokeEdgeFunction';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import type { 
   TradingConfig, 
   SystemHealth, 
   ExecutionIntent, 
   RiskContext,
-  RiskCheck 
+  RiskCheck,
+  RiskEvent 
 } from '@/types/trading';
 
 export function useTradingConfig() {
@@ -44,6 +47,23 @@ export function useTradingConfig() {
   }, [fetchConfig]);
 
   return { config, isLoading, error, updateConfig, refetch: fetchConfig };
+}
+
+export function useUpdateTradingConfig() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (updates: Partial<TradingConfig>) => {
+      const { data, error } = await invokeEdgeFunction<TradingConfig>('trading-config', {
+        body: updates
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['trading-config'] });
+    }
+  });
 }
 
 export function useSystemHealth() {
@@ -170,4 +190,48 @@ export function useTradingAudit() {
   };
 
   return { fetchAudit, isLoading };
+}
+
+export function useExecutionIntents() {
+  const { user } = useAuth();
+  
+  const { data: intents, isLoading, error, refetch } = useQuery({
+    queryKey: ['execution-intents', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('execution_intents')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(100);
+      
+      if (error) throw error;
+      return data as ExecutionIntent[];
+    },
+    enabled: !!user,
+  });
+
+  return { intents, isLoading, error, refetch };
+}
+
+export function useRiskEvents() {
+  const { user } = useAuth();
+  
+  const { data: events, isLoading, error, refetch } = useQuery({
+    queryKey: ['risk-events', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('risk_events')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(100);
+      
+      if (error) throw error;
+      return data as RiskEvent[];
+    },
+    enabled: !!user,
+  });
+
+  return { events, isLoading, error, refetch };
 }

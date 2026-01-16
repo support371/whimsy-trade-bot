@@ -14,6 +14,8 @@ import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import Trade from "./pages/Trade";
 import Dashboard from "./pages/Dashboard";
+import Config from "./pages/Config";
+import Status from "./pages/Status";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +35,8 @@ const App = () => (
               <Route path="/alerts" element={<ProtectedRoute><Alerts /></ProtectedRoute>} />
               <Route path="/trade" element={<ProtectedRoute><Trade /></ProtectedRoute>} />
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              <Route path="/config" element={<ProtectedRoute><Config /></ProtectedRoute>} />
+              <Route path="/status" element={<ProtectedRoute><Status /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AuthBannerProvider>
