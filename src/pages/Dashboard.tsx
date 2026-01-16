@@ -2,12 +2,20 @@ import { Header } from '@/components/dashboard/Header';
 import { Navigation } from '@/components/dashboard/Navigation';
 import { PnLDisplay } from '@/components/trading/PnLDisplay';
 import { SystemMetrics } from '@/components/trading/SystemMetrics';
+import { PnLChart } from '@/components/charts/PnLChart';
+import { DailyPnLChart } from '@/components/charts/DailyPnLChart';
+import { TradeDistributionChart } from '@/components/charts/TradeDistributionChart';
+import { WinLossDisplay } from '@/components/charts/WinLossDisplay';
 import { useSystemHealth, useTradingConfig } from '@/hooks/useTrading';
+import { useAllRealtimeSubscriptions } from '@/hooks/useRealtimeSubscriptions';
 import { Activity, Shield, Wallet, Settings } from 'lucide-react';
 
 const Dashboard = () => {
   const { health, isLoading: healthLoading } = useSystemHealth();
   const { config, isLoading: configLoading } = useTradingConfig();
+  
+  // Enable realtime subscriptions
+  useAllRealtimeSubscriptions();
 
   return (
     <div className="min-h-screen bg-background scanlines">
@@ -19,6 +27,7 @@ const Dashboard = () => {
           TRADING DASHBOARD
         </h1>
 
+        {/* Config Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="cyber-card p-4 flex items-center gap-4">
             <Wallet className="w-8 h-8 text-primary" />
@@ -52,9 +61,20 @@ const Dashboard = () => {
           </div>
         </div>
 
+        {/* P&L Overview */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <PnLDisplay health={health} isLoading={healthLoading} />
           <SystemMetrics health={health} isLoading={healthLoading} />
+        </div>
+
+        {/* Cumulative P&L Chart */}
+        <PnLChart />
+
+        {/* Charts Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <DailyPnLChart />
+          <TradeDistributionChart />
+          <WinLossDisplay />
         </div>
       </main>
     </div>
