@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useCryptoPrices } from '@/hooks/useCryptoPrices';
 import { useSignalEngine } from '@/hooks/useSignalEngine';
 import { Header } from '@/components/dashboard/Header';
+import { Navigation } from '@/components/dashboard/Navigation';
 import { PriceTicker } from '@/components/dashboard/PriceTicker';
 import { PriceChart } from '@/components/dashboard/PriceChart';
 import { SignalPanel } from '@/components/dashboard/SignalPanel';
@@ -34,6 +35,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background scanlines">
       <Header onSettingsClick={() => setSettingsOpen(true)} />
+      <Navigation />
       
       <PriceTicker 
         prices={prices} 

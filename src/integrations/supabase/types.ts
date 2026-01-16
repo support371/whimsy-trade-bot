@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      holdings: {
+        Row: {
+          avg_buy_price: number
+          created_at: string
+          id: string
+          name: string
+          portfolio_id: string
+          quantity: number
+          symbol: string
+          updated_at: string
+        }
+        Insert: {
+          avg_buy_price?: number
+          created_at?: string
+          id?: string
+          name: string
+          portfolio_id: string
+          quantity?: number
+          symbol: string
+          updated_at?: string
+        }
+        Update: {
+          avg_buy_price?: number
+          created_at?: string
+          id?: string
+          name?: string
+          portfolio_id?: string
+          quantity?: number
+          symbol?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "holdings_portfolio_id_fkey"
+            columns: ["portfolio_id"]
+            isOneToOne: false
+            referencedRelation: "portfolios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portfolios: {
         Row: {
           created_at: string
@@ -40,6 +81,39 @@ export type Database = {
           name?: string
           starting_balance?: number
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      price_alerts: {
+        Row: {
+          condition: string
+          created_at: string
+          id: string
+          is_active: boolean
+          symbol: string
+          target_price: number
+          triggered_at: string | null
+          user_id: string
+        }
+        Insert: {
+          condition: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          symbol: string
+          target_price: number
+          triggered_at?: string | null
+          user_id: string
+        }
+        Update: {
+          condition?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          symbol?: string
+          target_price?: number
+          triggered_at?: string | null
           user_id?: string
         }
         Relationships: []
