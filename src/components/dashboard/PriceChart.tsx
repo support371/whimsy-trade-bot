@@ -1,6 +1,18 @@
-import { useMemo } from 'react';
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { useMemo, useState } from 'react';
+import { 
+  ComposedChart, 
+  Area, 
+  Line, 
+  Bar,
+  XAxis, 
+  YAxis, 
+  Tooltip, 
+  ResponsiveContainer,
+  ReferenceLine
+} from 'recharts';
 import { CryptoPrice } from '@/types/crypto';
+import { applyIndicators, IndicatorData } from '@/lib/technicalIndicators';
+import { IndicatorToggles, IndicatorState } from './IndicatorToggles';
 
 interface PriceChartProps {
   price: CryptoPrice | null;
@@ -8,24 +20,35 @@ interface PriceChartProps {
 }
 
 export function PriceChart({ price, isLoading }: PriceChartProps) {
+  const [indicators, setIndicators] = useState<IndicatorState>({
+    rsi: false,
+    macd: false,
+    bollinger: false,
+  });
+
+  const handleToggle = (indicator: keyof IndicatorState) => {
+    setIndicators(prev => ({ ...prev, [indicator]: !prev[indicator] }));
+  };
+
   // Generate simulated historical data based on current price
-  const chartData = useMemo(() => {
+  const chartData = useMemo((): IndicatorData[] => {
     if (!price) return [];
     
-    const points = 24;
+    const points = 48; // More points for better indicator calculation
     const data = [];
     const basePrice = price.price;
-    const volatility = Math.abs(price.change24h) / 100;
+    const volatility = Math.max(Math.abs(price.change24h) / 100, 0.02);
     
     for (let i = 0; i < points; i++) {
       const timeAgo = points - i;
       const randomFactor = (Math.random() - 0.5) * volatility * basePrice;
       const trendFactor = (price.change24h / 100) * basePrice * (i / points);
-      const simulatedPrice = basePrice - trendFactor + randomFactor;
+      const cycleFactor = Math.sin(i / 6) * volatility * basePrice * 0.3;
+      const simulatedPrice = basePrice - trendFactor + randomFactor + cycleFactor;
       
       data.push({
-        time: `${timeAgo}h`,
-        price: Math.max(simulatedPrice, basePrice * 0.9),
+        time: timeAgo <= 24 ? `${timeAgo}h` : `${Math.floor(timeAgo / 24)}d`,
+        price: Math.max(simulatedPrice, basePrice * 0.85),
       });
     }
     
@@ -35,12 +58,13 @@ export function PriceChart({ price, isLoading }: PriceChartProps) {
       price: basePrice,
     });
     
-    return data;
+    // Apply technical indicators
+    return applyIndicators(data);
   }, [price]);
 
   if (isLoading) {
     return (
-      <div className="cyber-card p-6 h-[300px] animate-pulse">
+      <div className="cyber-card p-6 h-[400px] animate-pulse">
         <div className="h-full bg-muted rounded" />
       </div>
     );
@@ -48,7 +72,7 @@ export function PriceChart({ price, isLoading }: PriceChartProps) {
 
   if (!price) {
     return (
-      <div className="cyber-card p-6 h-[300px] flex items-center justify-center">
+      <div className="cyber-card p-6 h-[400px] flex items-center justify-center">
         <span className="text-muted-foreground">Select a coin to view chart</span>
       </div>
     );
@@ -57,6 +81,9 @@ export function PriceChart({ price, isLoading }: PriceChartProps) {
   const isPositive = price.change24h >= 0;
   const strokeColor = isPositive ? 'hsl(145, 100%, 50%)' : 'hsl(0, 85%, 55%)';
   const fillColor = isPositive ? 'url(#greenGradient)' : 'url(#redGradient)';
+
+  const showSubChart = indicators.rsi || indicators.macd;
+  const mainChartHeight = showSubChart ? 200 : 280;
 
   return (
     <div className="cyber-card p-6">
@@ -87,9 +114,12 @@ export function PriceChart({ price, isLoading }: PriceChartProps) {
         </div>
       </div>
 
-      <div className="h-[200px] chart-glow">
+      <IndicatorToggles indicators={indicators} onToggle={handleToggle} />
+
+      {/* Main Price Chart with Bollinger Bands */}
+      <div className={`mt-4 chart-glow`} style={{ height: mainChartHeight }}>
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+          <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
             <defs>
               <linearGradient id="greenGradient" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="hsl(145, 100%, 50%)" stopOpacity={0.4} />
@@ -99,12 +129,17 @@ export function PriceChart({ price, isLoading }: PriceChartProps) {
                 <stop offset="0%" stopColor="hsl(0, 85%, 55%)" stopOpacity={0.4} />
                 <stop offset="100%" stopColor="hsl(0, 85%, 55%)" stopOpacity={0} />
               </linearGradient>
+              <linearGradient id="bollingerGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="hsl(280, 70%, 60%)" stopOpacity={0.2} />
+                <stop offset="100%" stopColor="hsl(280, 70%, 60%)" stopOpacity={0.05} />
+              </linearGradient>
             </defs>
             <XAxis 
               dataKey="time" 
               stroke="hsl(180, 40%, 30%)" 
               tick={{ fill: 'hsl(180, 40%, 60%)', fontSize: 10 }}
               axisLine={{ stroke: 'hsl(230, 30%, 18%)' }}
+              interval="preserveStartEnd"
             />
             <YAxis 
               domain={['auto', 'auto']}
@@ -122,9 +157,47 @@ export function PriceChart({ price, isLoading }: PriceChartProps) {
                 boxShadow: '0 0 20px hsl(180, 100%, 50%, 0.3)',
               }}
               labelStyle={{ color: 'hsl(180, 100%, 90%)' }}
-              itemStyle={{ color: 'hsl(180, 100%, 50%)' }}
-              formatter={(value: number) => [`$${value.toLocaleString()}`, 'Price']}
+              formatter={(value: number, name: string) => {
+                if (name === 'price') return [`$${value.toLocaleString()}`, 'Price'];
+                if (name === 'upperBand') return [`$${value.toLocaleString()}`, 'Upper BB'];
+                if (name === 'lowerBand') return [`$${value.toLocaleString()}`, 'Lower BB'];
+                if (name === 'middleBand') return [`$${value.toLocaleString()}`, 'Middle BB'];
+                return [value, name];
+              }}
             />
+            
+            {/* Bollinger Bands */}
+            {indicators.bollinger && (
+              <>
+                <Area
+                  type="monotone"
+                  dataKey="upperBand"
+                  stroke="hsl(280, 70%, 60%)"
+                  strokeWidth={1}
+                  strokeDasharray="3 3"
+                  fill="none"
+                  dot={false}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="lowerBand"
+                  stroke="hsl(280, 70%, 60%)"
+                  strokeWidth={1}
+                  strokeDasharray="3 3"
+                  fill="url(#bollingerGradient)"
+                  dot={false}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="middleBand"
+                  stroke="hsl(280, 70%, 50%)"
+                  strokeWidth={1}
+                  dot={false}
+                />
+              </>
+            )}
+            
+            {/* Main Price Line */}
             <Area
               type="monotone"
               dataKey="price"
@@ -132,9 +205,107 @@ export function PriceChart({ price, isLoading }: PriceChartProps) {
               strokeWidth={2}
               fill={fillColor}
             />
-          </AreaChart>
+          </ComposedChart>
         </ResponsiveContainer>
       </div>
+
+      {/* RSI / MACD Sub-chart */}
+      {showSubChart && (
+        <div className="mt-2 border-t border-border pt-2" style={{ height: 120 }}>
+          <div className="flex items-center gap-4 mb-1 text-xs text-muted-foreground">
+            {indicators.rsi && <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-primary" /> RSI</span>}
+            {indicators.macd && (
+              <>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-accent" /> MACD</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-secondary" /> Signal</span>
+              </>
+            )}
+          </div>
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+              <XAxis 
+                dataKey="time" 
+                stroke="hsl(180, 40%, 30%)" 
+                tick={{ fill: 'hsl(180, 40%, 60%)', fontSize: 9 }}
+                axisLine={{ stroke: 'hsl(230, 30%, 18%)' }}
+                interval="preserveStartEnd"
+                hide
+              />
+              <YAxis 
+                domain={[0, 100]}
+                stroke="hsl(180, 40%, 30%)"
+                tick={{ fill: 'hsl(180, 40%, 60%)', fontSize: 9 }}
+                axisLine={{ stroke: 'hsl(230, 30%, 18%)' }}
+                width={30}
+                ticks={[20, 50, 80]}
+              />
+              <Tooltip 
+                contentStyle={{
+                  backgroundColor: 'hsl(230, 30%, 10%)',
+                  border: '1px solid hsl(180, 100%, 50%)',
+                  borderRadius: '8px',
+                  fontSize: 11,
+                }}
+                formatter={(value: number, name: string) => {
+                  if (typeof value !== 'number') return ['-', name];
+                  return [value.toFixed(1), name.toUpperCase()];
+                }}
+              />
+              
+              {/* RSI reference lines */}
+              {indicators.rsi && (
+                <>
+                  <ReferenceLine y={70} stroke="hsl(0, 85%, 55%)" strokeDasharray="3 3" strokeOpacity={0.5} />
+                  <ReferenceLine y={30} stroke="hsl(145, 100%, 50%)" strokeDasharray="3 3" strokeOpacity={0.5} />
+                </>
+              )}
+              
+              {/* MACD Histogram */}
+              {indicators.macd && (
+                <Bar 
+                  dataKey="histogram" 
+                  fill="hsl(180, 100%, 40%)"
+                  opacity={0.5}
+                />
+              )}
+              
+              {/* RSI Line */}
+              {indicators.rsi && (
+                <Line
+                  type="monotone"
+                  dataKey="rsi"
+                  stroke="hsl(180, 100%, 50%)"
+                  strokeWidth={1.5}
+                  dot={false}
+                  connectNulls
+                />
+              )}
+              
+              {/* MACD Lines */}
+              {indicators.macd && (
+                <>
+                  <Line
+                    type="monotone"
+                    dataKey="macd"
+                    stroke="hsl(320, 100%, 60%)"
+                    strokeWidth={1.5}
+                    dot={false}
+                    connectNulls
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="signal"
+                    stroke="hsl(45, 100%, 50%)"
+                    strokeWidth={1}
+                    dot={false}
+                    connectNulls
+                  />
+                </>
+              )}
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
+      )}
     </div>
   );
 }
