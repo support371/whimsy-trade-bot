@@ -1,19 +1,45 @@
+import { useState, useEffect, useCallback } from 'react';
 import { CryptoPrice } from '@/types/crypto';
-import { TrendingUp, TrendingDown, Minus, Wifi, WifiOff, Database } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Wifi, WifiOff, Database, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 type DataSource = 'live' | 'cached' | 'fallback';
+
+const COOLDOWN_SECONDS = 30;
 
 interface PriceTickerProps {
   prices: CryptoPrice[];
   selectedSymbol: string;
   onSelect: (id: string) => void;
   dataSource?: DataSource;
+  onRefresh?: () => void;
 }
 
-export function PriceTicker({ prices, selectedSymbol, onSelect, dataSource = 'live' }: PriceTickerProps) {
+export function PriceTicker({ prices, selectedSymbol, onSelect, dataSource = 'live', onRefresh }: PriceTickerProps) {
+  const [cooldown, setCooldown] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setInterval(() => {
+      setCooldown(prev => Math.max(0, prev - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [cooldown]);
+
+  const handleRefresh = useCallback(async () => {
+    if (cooldown > 0 || !onRefresh) return;
+    setIsRefreshing(true);
+    try {
+      await onRefresh();
+    } finally {
+      setIsRefreshing(false);
+      setCooldown(COOLDOWN_SECONDS);
+    }
+  }, [cooldown, onRefresh]);
   const getDataSourceInfo = () => {
     switch (dataSource) {
       case 'live':
@@ -31,6 +57,33 @@ export function PriceTicker({ prices, selectedSymbol, onSelect, dataSource = 'li
   return (
     <div className="w-full overflow-hidden bg-muted/30 border-b border-border">
       <div className="flex items-center gap-6 py-2 px-4 overflow-x-auto scrollbar-hide">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={cooldown > 0 || isRefreshing}
+              className={cn(
+                "h-7 px-2 shrink-0 transition-all",
+                cooldown > 0 && "opacity-50"
+              )}
+            >
+              <RefreshCw className={cn("w-3.5 h-3.5 mr-1", isRefreshing && "animate-spin")} />
+              {cooldown > 0 ? (
+                <span className="text-xs font-mono w-6">{cooldown}s</span>
+              ) : (
+                <span className="text-xs">Refresh</span>
+              )}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            {cooldown > 0 
+              ? `Wait ${cooldown}s before refreshing again`
+              : 'Refresh prices now'
+            }
+          </TooltipContent>
+        </Tooltip>
         <Tooltip>
           <TooltipTrigger asChild>
             <Badge variant="outline" className={cn("flex items-center gap-1.5 shrink-0", sourceInfo.bg, sourceInfo.color)}>
