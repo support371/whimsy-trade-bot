@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useCryptoPrices } from '@/hooks/useCryptoPrices';
 import { useSignalEngine } from '@/hooks/useSignalEngine';
+import { useWatchlist } from '@/hooks/useWatchlist';
 import { Header } from '@/components/dashboard/Header';
 import { Navigation } from '@/components/dashboard/Navigation';
 import { PriceTicker } from '@/components/dashboard/PriceTicker';
@@ -9,6 +10,7 @@ import { SignalPanel } from '@/components/dashboard/SignalPanel';
 import { RiskGauge } from '@/components/dashboard/RiskGauge';
 import { MicrostructureDisplay } from '@/components/dashboard/MicrostructureDisplay';
 import { AIInsightCard } from '@/components/dashboard/AIInsightCard';
+import { WatchlistPanel } from '@/components/dashboard/WatchlistPanel';
 import { SettingsModal, UserSettings, DEFAULT_SETTINGS } from '@/components/dashboard/SettingsModal';
 import { toast } from 'sonner';
 
@@ -18,6 +20,7 @@ const Index = () => {
   const [settings, setSettings] = useState<UserSettings>(DEFAULT_SETTINGS);
   
   const { prices, isLoading, error, dataSource, refetch } = useCryptoPrices();
+  const { watchlist, isLoading: watchlistLoading, toggleWatchlist, removeFromWatchlist } = useWatchlist();
   const selectedCoin = prices.find(p => p.id === selectedSymbol) || null;
   
   const { signal, risk, microstructure } = useSignalEngine(selectedCoin, {
@@ -32,6 +35,8 @@ const Index = () => {
     toast.success('Settings updated successfully');
   };
 
+  const watchlistSymbols = watchlist.map(w => w.symbol);
+
   return (
     <div className="min-h-screen bg-background scanlines">
       <Header onSettingsClick={() => setSettingsOpen(true)} />
@@ -43,6 +48,8 @@ const Index = () => {
         onSelect={setSelectedSymbol}
         dataSource={dataSource}
         onRefresh={refetch}
+        watchlist={watchlistSymbols}
+        onToggleWatchlist={toggleWatchlist}
       />
       
       <main className="container mx-auto p-4 lg:p-6 space-y-4 lg:space-y-6">
@@ -75,8 +82,8 @@ const Index = () => {
           </div>
         </div>
         
-        {/* Bottom Grid - Microstructure & AI Insights */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+        {/* Bottom Grid - Microstructure, AI Insights & Watchlist */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
           <MicrostructureDisplay 
             features={microstructure}
             isLoading={isLoading}
@@ -85,6 +92,14 @@ const Index = () => {
             selectedCoin={selectedCoin}
             signal={signal?.direction}
             riskScore={risk?.score}
+          />
+          <WatchlistPanel
+            watchlist={watchlist}
+            prices={prices}
+            selectedSymbol={selectedSymbol}
+            onSelect={setSelectedSymbol}
+            onRemove={removeFromWatchlist}
+            isLoading={watchlistLoading}
           />
         </div>
       </main>
