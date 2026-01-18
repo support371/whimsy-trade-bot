@@ -22,7 +22,21 @@ interface CacheEntry {
 }
 
 let priceCache: CacheEntry | null = null;
-const CACHE_TTL = 30000; // 30 seconds
+const CACHE_TTL = 60000; // 60 seconds - increased to reduce API calls
+
+// Fallback static prices when API is unavailable
+const FALLBACK_PRICES: CoinGeckoPrice = {
+  'bitcoin': { usd: 95000, usd_24h_change: 0, usd_24h_vol: 20000000000, usd_market_cap: 1900000000000 },
+  'ethereum': { usd: 3300, usd_24h_change: 0, usd_24h_vol: 12000000000, usd_market_cap: 400000000000 },
+  'solana': { usd: 140, usd_24h_change: 0, usd_24h_vol: 2500000000, usd_market_cap: 80000000000 },
+  'binancecoin': { usd: 940, usd_24h_change: 0, usd_24h_vol: 1300000000, usd_market_cap: 130000000000 },
+  'cardano': { usd: 0.39, usd_24h_change: 0, usd_24h_vol: 350000000, usd_market_cap: 14500000000 },
+  'ripple': { usd: 2.05, usd_24h_change: 0, usd_24h_vol: 1400000000, usd_market_cap: 125000000000 },
+  'polkadot': { usd: 2.15, usd_24h_change: 0, usd_24h_vol: 120000000, usd_market_cap: 3600000000 },
+  'avalanche-2': { usd: 13.5, usd_24h_change: 0, usd_24h_vol: 200000000, usd_market_cap: 5800000000 },
+  'dogecoin': { usd: 0.137, usd_24h_change: 0, usd_24h_vol: 570000000, usd_market_cap: 23000000000 },
+  'chainlink': { usd: 13.7, usd_24h_change: 0, usd_24h_vol: 240000000, usd_market_cap: 9700000000 },
+};
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -61,11 +75,19 @@ serve(async (req) => {
     );
 
     if (!response.ok) {
-      // If rate limited, return cached data if available
-      if (response.status === 429 && priceCache) {
-        console.log('Rate limited, returning stale cache');
-        const prices = transformPriceData(priceCache.data, coinIds);
-        return new Response(JSON.stringify({ prices, cached: true, rateLimited: true }), {
+      // If rate limited, return cached data if available, otherwise use fallback
+      if (response.status === 429) {
+        if (priceCache) {
+          console.log('Rate limited, returning stale cache');
+          const prices = transformPriceData(priceCache.data, coinIds);
+          return new Response(JSON.stringify({ prices, cached: true, rateLimited: true }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+        // No cache available, use fallback static prices
+        console.log('Rate limited with no cache, using fallback prices');
+        const prices = transformPriceData(FALLBACK_PRICES, coinIds);
+        return new Response(JSON.stringify({ prices, fallback: true, rateLimited: true }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
