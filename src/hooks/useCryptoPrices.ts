@@ -57,7 +57,8 @@ export function useCryptoPrices(symbols?: string[]) {
 
     if (authLoading || !session) return;
 
-    const interval = setInterval(fetchPrices, 30000);
+    // Poll every 60 seconds to reduce API rate limiting
+    const interval = setInterval(fetchPrices, 60000);
     return () => clearInterval(interval);
   }, [authLoading, session, fetchPrices]);
 
