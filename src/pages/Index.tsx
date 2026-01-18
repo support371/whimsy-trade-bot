@@ -17,7 +17,7 @@ const Index = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settings, setSettings] = useState<UserSettings>(DEFAULT_SETTINGS);
   
-  const { prices, isLoading, error, dataSource } = useCryptoPrices();
+  const { prices, isLoading, error, dataSource, refetch } = useCryptoPrices();
   const selectedCoin = prices.find(p => p.id === selectedSymbol) || null;
   
   const { signal, risk, microstructure } = useSignalEngine(selectedCoin, {
@@ -42,6 +42,7 @@ const Index = () => {
         selectedSymbol={selectedSymbol} 
         onSelect={setSelectedSymbol}
         dataSource={dataSource}
+        onRefresh={refetch}
       />
       
       <main className="container mx-auto p-4 lg:p-6 space-y-4 lg:space-y-6">
