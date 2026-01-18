@@ -10,7 +10,12 @@ const DEFAULT_COINS = [
 
 interface CryptoPricesResponse {
   prices: CryptoPrice[];
+  cached?: boolean;
+  fallback?: boolean;
+  rateLimited?: boolean;
 }
+
+type DataSource = 'live' | 'cached' | 'fallback';
 
 export function useCryptoPrices(symbols?: string[]) {
   const { session, isLoading: authLoading } = useAuth();
@@ -19,6 +24,7 @@ export function useCryptoPrices(symbols?: string[]) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const [dataSource, setDataSource] = useState<DataSource>('live');
 
   const fetchPrices = useCallback(async () => {
     if (authLoading) return;
@@ -43,6 +49,14 @@ export function useCryptoPrices(symbols?: string[]) {
       if (data?.prices) {
         setPrices(data.prices);
         setLastUpdate(new Date());
+        // Determine data source
+        if (data.fallback) {
+          setDataSource('fallback');
+        } else if (data.cached) {
+          setDataSource('cached');
+        } else {
+          setDataSource('live');
+        }
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to fetch prices';
@@ -62,5 +76,5 @@ export function useCryptoPrices(symbols?: string[]) {
     return () => clearInterval(interval);
   }, [authLoading, session, fetchPrices]);
 
-  return { prices, isLoading, error, lastUpdate, refetch: fetchPrices };
+  return { prices, isLoading, error, lastUpdate, dataSource, refetch: fetchPrices };
 }

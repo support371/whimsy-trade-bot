@@ -1,17 +1,49 @@
 import { CryptoPrice } from '@/types/crypto';
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Wifi, WifiOff, Database } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+
+type DataSource = 'live' | 'cached' | 'fallback';
 
 interface PriceTickerProps {
   prices: CryptoPrice[];
   selectedSymbol: string;
   onSelect: (id: string) => void;
+  dataSource?: DataSource;
 }
 
-export function PriceTicker({ prices, selectedSymbol, onSelect }: PriceTickerProps) {
+export function PriceTicker({ prices, selectedSymbol, onSelect, dataSource = 'live' }: PriceTickerProps) {
+  const getDataSourceInfo = () => {
+    switch (dataSource) {
+      case 'live':
+        return { icon: Wifi, label: 'Live', color: 'text-accent', bg: 'bg-accent/10 border-accent/30' };
+      case 'cached':
+        return { icon: Database, label: 'Cached', color: 'text-warning', bg: 'bg-warning/10 border-warning/30' };
+      case 'fallback':
+        return { icon: WifiOff, label: 'Offline', color: 'text-muted-foreground', bg: 'bg-muted border-muted-foreground/30' };
+    }
+  };
+
+  const sourceInfo = getDataSourceInfo();
+  const SourceIcon = sourceInfo.icon;
+
   return (
     <div className="w-full overflow-hidden bg-muted/30 border-b border-border">
       <div className="flex items-center gap-6 py-2 px-4 overflow-x-auto scrollbar-hide">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Badge variant="outline" className={cn("flex items-center gap-1.5 shrink-0", sourceInfo.bg, sourceInfo.color)}>
+              <SourceIcon className="w-3 h-3" />
+              <span className="text-xs font-medium">{sourceInfo.label}</span>
+            </Badge>
+          </TooltipTrigger>
+          <TooltipContent>
+            {dataSource === 'live' && 'Prices are updating in real-time'}
+            {dataSource === 'cached' && 'Using cached prices (API rate limited)'}
+            {dataSource === 'fallback' && 'Using fallback prices (API unavailable)'}
+          </TooltipContent>
+        </Tooltip>
         {prices.map((coin) => {
           const isPositive = coin.change24h >= 0;
           const isSelected = coin.id === selectedSymbol;
