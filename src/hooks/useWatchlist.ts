@@ -7,6 +7,7 @@ export interface WatchlistItem {
   id: string;
   symbol: string;
   name: string;
+  position: number;
   created_at: string;
 }
 
@@ -27,7 +28,7 @@ export function useWatchlist() {
         .from('watchlist')
         .select('*')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: true });
+        .order('position', { ascending: true });
 
       if (error) throw error;
       setWatchlist(data || []);
@@ -120,6 +121,51 @@ export function useWatchlist() {
     }
   }, [user]);
 
+  const reorderWatchlist = useCallback(async (fromIndex: number, toIndex: number) => {
+    if (!user || fromIndex === toIndex) return false;
+
+    // Optimistic update
+    const newWatchlist = [...watchlist];
+    const [movedItem] = newWatchlist.splice(fromIndex, 1);
+    newWatchlist.splice(toIndex, 0, movedItem);
+    
+    // Recalculate positions
+    const updates = newWatchlist.map((item, index) => ({
+      id: item.id,
+      position: index + 1,
+    }));
+    
+    setWatchlist(newWatchlist.map((item, index) => ({ ...item, position: index + 1 })));
+
+    try {
+      // Update all positions in a batch
+      const promises = updates.map(({ id, position }) =>
+        supabase
+          .from('watchlist')
+          .update({ position })
+          .eq('id', id)
+          .eq('user_id', user.id)
+      );
+
+      const results = await Promise.all(promises);
+      const hasError = results.some(r => r.error);
+      
+      if (hasError) {
+        // Revert on error
+        await fetchWatchlist();
+        toast.error('Failed to reorder watchlist');
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error reordering watchlist:', error);
+      await fetchWatchlist();
+      toast.error('Failed to reorder watchlist');
+      return false;
+    }
+  }, [user, watchlist, fetchWatchlist]);
+
   const isInWatchlist = useCallback((symbol: string) => {
     return watchlist.some(item => item.symbol === symbol);
   }, [watchlist]);
@@ -137,6 +183,7 @@ export function useWatchlist() {
     isLoading,
     addToWatchlist,
     removeFromWatchlist,
+    reorderWatchlist,
     isInWatchlist,
     toggleWatchlist,
     refetch: fetchWatchlist,

@@ -20,7 +20,7 @@ const Index = () => {
   const [settings, setSettings] = useState<UserSettings>(DEFAULT_SETTINGS);
   
   const { prices, isLoading, error, dataSource, refetch } = useCryptoPrices();
-  const { watchlist, isLoading: watchlistLoading, toggleWatchlist, removeFromWatchlist } = useWatchlist();
+  const { watchlist, isLoading: watchlistLoading, toggleWatchlist, removeFromWatchlist, reorderWatchlist } = useWatchlist();
   const selectedCoin = prices.find(p => p.id === selectedSymbol) || null;
   
   const { signal, risk, microstructure } = useSignalEngine(selectedCoin, {
@@ -99,6 +99,7 @@ const Index = () => {
             selectedSymbol={selectedSymbol}
             onSelect={setSelectedSymbol}
             onRemove={removeFromWatchlist}
+            onReorder={reorderWatchlist}
             isLoading={watchlistLoading}
           />
         </div>
