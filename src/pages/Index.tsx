@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useCryptoPrices } from '@/hooks/useCryptoPrices';
 import { useSignalEngine } from '@/hooks/useSignalEngine';
 import { useWatchlist } from '@/hooks/useWatchlist';
+import { useWatchlistAlerts } from '@/hooks/useWatchlistAlerts';
 import { Header } from '@/components/dashboard/Header';
 import { Navigation } from '@/components/dashboard/Navigation';
 import { PriceTicker } from '@/components/dashboard/PriceTicker';
@@ -22,6 +23,9 @@ const Index = () => {
   const { prices, isLoading, error, dataSource, refetch } = useCryptoPrices();
   const { watchlist, isLoading: watchlistLoading, toggleWatchlist, removeFromWatchlist, reorderWatchlist } = useWatchlist();
   const selectedCoin = prices.find(p => p.id === selectedSymbol) || null;
+
+  // Enable price change notifications for watchlisted coins (5% threshold)
+  useWatchlistAlerts(watchlist, prices, { threshold: 5, enabled: true });
   
   const { signal, risk, microstructure } = useSignalEngine(selectedCoin, {
     riskTolerance: settings.riskTolerance,
