@@ -101,7 +101,16 @@ Deno.serve(async (req) => {
     }
 
     if (req.method === 'POST') {
-      const updates = await req.json();
+      // Handle empty body gracefully (e.g., when called without parameters)
+      let updates: Record<string, unknown> = {};
+      try {
+        const text = await req.text();
+        if (text) {
+          updates = JSON.parse(text);
+        }
+      } catch {
+        // Empty or invalid body - treat as no updates
+      }
       
       // Handle kill switch reset
       if (updates.reset_kill_switch) {
