@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { CryptoPrice } from '@/types/crypto';
-import { TrendingUp, TrendingDown, Minus, Wifi, WifiOff, Database, RefreshCw, Star } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Wifi, WifiOff, Database, RefreshCw, Star, Filter } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Toggle } from '@/components/ui/toggle';
 
 type DataSource = 'live' | 'cached' | 'fallback';
 
@@ -31,6 +32,12 @@ export function PriceTicker({
 }: PriceTickerProps) {
   const [cooldown, setCooldown] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [watchlistOnly, setWatchlistOnly] = useState(false);
+
+  // Filter prices based on watchlist toggle
+  const filteredPrices = watchlistOnly 
+    ? prices.filter(coin => watchlist.includes(coin.symbol))
+    : prices;
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -107,7 +114,32 @@ export function PriceTicker({
             {dataSource === 'fallback' && 'Using fallback prices (API unavailable)'}
           </TooltipContent>
         </Tooltip>
-        {prices.map((coin) => {
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Toggle
+              pressed={watchlistOnly}
+              onPressedChange={setWatchlistOnly}
+              size="sm"
+              className={cn(
+                "h-7 px-2 shrink-0 data-[state=on]:bg-warning/20 data-[state=on]:text-warning data-[state=on]:border-warning/50",
+                watchlist.length === 0 && "opacity-50 cursor-not-allowed"
+              )}
+              disabled={watchlist.length === 0}
+            >
+              <Filter className="w-3.5 h-3.5 mr-1" />
+              <span className="text-xs">Watchlist</span>
+            </Toggle>
+          </TooltipTrigger>
+          <TooltipContent>
+            {watchlist.length === 0 
+              ? 'Add coins to your watchlist first'
+              : watchlistOnly 
+                ? 'Showing watchlisted coins only' 
+                : 'Show only watchlisted coins'
+            }
+          </TooltipContent>
+        </Tooltip>
+        {filteredPrices.map((coin) => {
           const isPositive = coin.change24h >= 0;
           const isSelected = coin.id === selectedSymbol;
           const isWatchlisted = watchlist.includes(coin.symbol);
