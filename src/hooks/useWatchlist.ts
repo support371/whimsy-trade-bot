@@ -48,7 +48,7 @@ export function useWatchlist() {
     if (!user) return;
 
     const channel = supabase
-      .channel('watchlist-changes')
+      .channel(`${user.id}:watchlist-changes`)
       .on(
         'postgres_changes',
         {

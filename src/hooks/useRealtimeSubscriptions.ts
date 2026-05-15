@@ -13,7 +13,7 @@ export function useRealtimeIntents() {
     if (!user) return;
 
     const channel = supabase
-      .channel('intents-realtime')
+      .channel(`${user.id}:intents-realtime`)
       .on(
         'postgres_changes',
         {
@@ -61,7 +61,7 @@ export function useRealtimeHealth() {
     if (!user) return;
 
     const channel = supabase
-      .channel('health-realtime')
+      .channel(`${user.id}:health-realtime`)
       .on(
         'postgres_changes',
         {
@@ -99,7 +99,7 @@ export function useRealtimeTrades() {
     if (!user) return;
 
     const channel = supabase
-      .channel('trades-realtime')
+      .channel(`${user.id}:trades-realtime`)
       .on(
         'postgres_changes',
         {
@@ -139,7 +139,7 @@ export function useRealtimeRiskEvents() {
     if (!user) return;
 
     const channel = supabase
-      .channel('risk-events-realtime')
+      .channel(`${user.id}:risk-events-realtime`)
       .on(
         'postgres_changes',
         {
