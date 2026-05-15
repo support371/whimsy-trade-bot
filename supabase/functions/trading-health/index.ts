@@ -33,18 +33,18 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (req.method === 'GET') {
+    const getHealthPayload = async () => {
       // Get or create system health record
       let { data: health } = await supabase
         .from('system_health')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (!health) {
-        const { data: newHealth, error: createError } = await supabase
+        const { error: upsertError } = await supabase
           .from('system_health')
-          .insert({
+          .upsert({
             user_id: user.id,
             api_error_count: 0,
             failed_order_count: 0,
@@ -52,11 +52,17 @@ Deno.serve(async (req) => {
             daily_pnl: 0,
             unrealized_pnl: 0,
             realized_pnl: 0
-          })
-          .select()
+          }, { onConflict: 'user_id', ignoreDuplicates: true });
+
+        if (upsertError) throw upsertError;
+
+        const { data: newHealth, error: fetchError } = await supabase
+          .from('system_health')
+          .select('*')
+          .eq('user_id', user.id)
           .single();
 
-        if (createError) throw createError;
+        if (fetchError) throw fetchError;
         health = newHealth;
       }
 
@@ -83,7 +89,7 @@ Deno.serve(async (req) => {
         .eq('status', 'REJECTED_RISK')
         .gte('created_at', today);
 
-      return new Response(JSON.stringify({
+      return {
         ...health,
         trading_mode: config?.trading_mode || 'paper',
         thresholds: {
@@ -95,7 +101,11 @@ Deno.serve(async (req) => {
           rejections_today: todayRejections || 0
         },
         system_status: health?.kill_switch_active ? 'HALTED' : 'OPERATIONAL'
-      }), {
+      };
+    };
+
+    if (req.method === 'GET') {
+      return new Response(JSON.stringify(await getHealthPayload()), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
@@ -105,11 +115,16 @@ Deno.serve(async (req) => {
       let updates: Record<string, unknown> = {};
       try {
         const text = await req.text();
-        if (text) {
+        if (text.trim()) {
           updates = JSON.parse(text);
         }
       } catch {
         // Empty or invalid body - treat as no updates
+      }
+      if (Object.keys(updates).length === 0) {
+        return new Response(JSON.stringify(await getHealthPayload()), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
       }
       
       // Handle kill switch reset
