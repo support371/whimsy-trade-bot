@@ -94,7 +94,15 @@ Deno.serve(async (req) => {
         });
       }
 
-      const updates = JSON.parse(rawBody);
+      let updates: Record<string, unknown>;
+      try {
+        updates = JSON.parse(rawBody);
+      } catch (_error) {
+        return new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
       
       // Validate fields
       const allowedFields = [
