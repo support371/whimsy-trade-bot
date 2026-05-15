@@ -160,6 +160,8 @@ const Config = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="binance">Binance</SelectItem>
+                    <SelectItem value="bitget">Bitget</SelectItem>
+                    <SelectItem value="btcc">BTCC</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
