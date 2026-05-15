@@ -33,7 +33,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (req.method === 'GET') {
+    const getOrCreateConfig = async () => {
       // Get user's trading config
       let { data: config } = await supabase
         .from('trading_config')
@@ -73,13 +73,28 @@ Deno.serve(async (req) => {
         config = fetched;
       }
 
+      return config;
+    };
+
+    if (req.method === 'GET') {
+      const config = await getOrCreateConfig();
+
       return new Response(JSON.stringify(config), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
     if (req.method === 'PUT' || req.method === 'POST') {
-      const updates = await req.json();
+      const rawBody = await req.text();
+      if (!rawBody.trim()) {
+        const config = await getOrCreateConfig();
+
+        return new Response(JSON.stringify(config), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      const updates = JSON.parse(rawBody);
       
       // Validate fields
       const allowedFields = [
