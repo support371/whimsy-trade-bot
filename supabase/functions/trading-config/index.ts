@@ -35,17 +35,17 @@ Deno.serve(async (req) => {
 
     if (req.method === 'GET') {
       // Get user's trading config
-      let { data: config, error } = await supabase
+      let { data: config } = await supabase
         .from('trading_config')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      // If no config exists, create default
+      // If no config exists, create default (upsert to handle races)
       if (!config) {
-        const { data: newConfig, error: createError } = await supabase
+        const { error: upsertError } = await supabase
           .from('trading_config')
-          .insert({
+          .upsert({
             user_id: user.id,
             exchange: 'binance',
             network: 'testnet',
@@ -59,12 +59,18 @@ Deno.serve(async (req) => {
             profit_withdrawal_threshold: 200,
             kill_switch_max_api_errors: 10,
             kill_switch_max_failed_orders: 5
-          })
-          .select()
+          }, { onConflict: 'user_id', ignoreDuplicates: true });
+
+        if (upsertError) throw upsertError;
+
+        const { data: fetched, error: fetchError } = await supabase
+          .from('trading_config')
+          .select('*')
+          .eq('user_id', user.id)
           .single();
 
-        if (createError) throw createError;
-        config = newConfig;
+        if (fetchError) throw fetchError;
+        config = fetched;
       }
 
       return new Response(JSON.stringify(config), {
