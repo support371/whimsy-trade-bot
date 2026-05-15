@@ -4,6 +4,7 @@ import { handleAuthError } from '@/lib/handleAuthError';
 interface InvokeOptions {
   body?: Record<string, unknown>;
   headers?: Record<string, string>;
+  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 }
 
 interface InvokeResult<T> {
@@ -32,8 +33,10 @@ export async function invokeEdgeFunction<T = unknown>(
       return { data: null, error: new Error('Not authenticated') };
     }
 
+    const hasBody = options.body !== undefined;
     const { data, error: fnError } = await supabase.functions.invoke(functionName, {
-      body: options.body,
+      ...(hasBody ? { body: options.body } : {}),
+      method: options.method ?? (hasBody ? 'POST' : 'GET'),
       headers: {
         Authorization: `Bearer ${accessToken}`,
         ...options.headers,
