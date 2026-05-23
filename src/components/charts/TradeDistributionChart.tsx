@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -12,7 +13,7 @@ const COLORS = [
   'hsl(var(--warning))',
 ];
 
-export function TradeDistributionChart() {
+function TradeDistributionChartImpl() {
   const { data: distribution, isLoading } = useTradeDistribution();
 
   if (isLoading) {
@@ -85,3 +86,4 @@ export function TradeDistributionChart() {
     </Card>
   );
 }
+export const TradeDistributionChart = memo(TradeDistributionChartImpl);

@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import {
   BarChart,
   Bar,
@@ -14,7 +15,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { usePnLHistory } from '@/hooks/usePnLHistory';
 import { BarChart3 } from 'lucide-react';
 
-export function DailyPnLChart() {
+function DailyPnLChartImpl() {
   const { data: pnlHistory, isLoading } = usePnLHistory();
 
   if (isLoading) {
@@ -96,3 +97,4 @@ export function DailyPnLChart() {
     </Card>
   );
 }
+export const DailyPnLChart = memo(DailyPnLChartImpl);
