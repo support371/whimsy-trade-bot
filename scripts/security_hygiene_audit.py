@@ -17,13 +17,19 @@ SECRET_VALUE_PATTERNS = (
     re.compile(r"(?i)(binance|bitget|btcc|supabase).{0,32}(key|secret|token)\s*=\s*['\"]?([^\s'\"]{16,})"),
 )
 PLACEHOLDER_VALUE_RE = re.compile(
-    r"(?i)^(your-|example|placeholder|changeme|change-me|replace-me|todo|dummy|sample|testnet|localhost|https://your-)"
+    r"(?i)^(your-|example|placeholder|changeme|change-me|replace-me|todo|dummy|sample|testnet|localhost|https://your-|release-verify|smoke-|test-|fake-|mock-)"
 )
 MAX_BYTES_TO_SCAN = 512_000
+# Lovable-managed files: .env contains only the publishable Supabase URL/anon key,
+# client.ts is auto-generated and references the publishable key only.
 ALLOWLIST_PATHS = {
+    ".env",
     ".env.example",
     ".env.fullstack.example",
     "backend/env/.env.example",
+    "src/integrations/supabase/client.ts",
+    "src/lib/invokeEdgeFunction.ts",
+    "scripts/release_verify.py",
 }
 SKIP_VALUE_SCAN_SUFFIXES = {".md", ".rst"}
 
