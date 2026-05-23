@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import {
   AreaChart,
   Area,
@@ -14,7 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { usePnLHistory } from '@/hooks/usePnLHistory';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 
-export function PnLChart() {
+function PnLChartImpl() {
   const { data: pnlHistory, isLoading } = usePnLHistory();
 
   const { latestPnL, isPositive } = useMemo(() => {
@@ -112,3 +112,4 @@ export function PnLChart() {
     </Card>
   );
 }
+export const PnLChart = memo(PnLChartImpl);

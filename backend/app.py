@@ -18,9 +18,11 @@ from backend.models import Features
 from backend.logic.signals import build_signal
 from backend.logic.risk import compute_risk_score, risk_gate
 from backend.logic.simulate import simulate_session, StepResult
+from backend.routes.providers import providers_router
 
 
 app = FastAPI(title="Lovable AI Crypto Risk Agent", version="1.0.0")
+app.include_router(providers_router)
 
 
 # ---------- Pydantic models for API ----------
