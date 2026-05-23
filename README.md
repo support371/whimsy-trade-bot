@@ -1,73 +1,200 @@
-# Welcome to your Lovable project
+# Whimsy Trade Bot
 
-## Project info
+AI-powered paper trading simulator with risk management, market analysis, and portfolio tracking.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Features
 
-## How can I edit this code?
+- Paper trading simulation (no real money at risk)
+- Real-time crypto price tracking
+- AI-powered market insights
+- Risk management with kill switch
+- Portfolio tracking and P&L charts
+- Trade execution logging and audit trail
 
-There are several ways of editing your application.
+## Tech Stack
 
-**Use Lovable**
+- **Frontend:** React 18, TypeScript, Vite
+- **UI:** shadcn/ui, Tailwind CSS
+- **State:** TanStack Query, React Context
+- **Backend:** Supabase (Auth, Database, Edge Functions)
+- **Charts:** Recharts
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## Prerequisites
 
-Changes made via Lovable will be committed automatically to this repo.
+- Node.js 18+ 
+- npm or bun
+- Supabase account (for backend)
 
-**Use your preferred IDE**
+## Local Development Setup
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+1. **Clone the repository:**
+   ```bash
+   git clone <repository-url>
+   cd whimsy-trade-bot
+   ```
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
 
-Follow these steps:
+3. **Configure environment variables:**
+   
+   Copy the example env file and update with your Supabase credentials:
+   ```bash
+   cp .env.example .env
+   ```
+   
+   Edit `.env` with your values:
+   ```env
+   VITE_SUPABASE_URL=https://your-project.supabase.co
+   VITE_SUPABASE_PUBLISHABLE_KEY=your-anon-key
+   VITE_SUPABASE_PROJECT_ID=your-project-id
+   ```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+4. **Start the development server:**
+   ```bash
+   npm run dev
+   ```
+   
+   The app will be available at `http://localhost:8080`
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## Build
 
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```bash
+npm run build
 ```
 
-**Edit a file directly in GitHub**
+Output will be in the `dist/` directory.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Deployment to Vercel
 
-**Use GitHub Codespaces**
+### Option 1: Vercel Dashboard
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+1. Import your repository in the Vercel dashboard
+2. Configure the following settings:
+   - **Framework Preset:** Vite
+   - **Build Command:** `npm run build`
+   - **Output Directory:** `dist`
+   - **Install Command:** `npm install`
 
-## What technologies are used for this project?
+3. Add environment variables in Vercel project settings:
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_PUBLISHABLE_KEY`
+   - `VITE_SUPABASE_PROJECT_ID`
 
-This project is built with:
+4. Deploy
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### Option 2: Vercel CLI
 
-## How can I deploy this project?
+```bash
+npm i -g vercel
+vercel
+```
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+### Vercel Configuration
 
-## Can I connect a custom domain to my Lovable project?
+The `vercel.json` file is pre-configured for SPA routing:
 
-Yes, you can!
+```json
+{
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/" }
+  ]
+}
+```
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+This ensures all routes (like `/dashboard`) work correctly on direct access.
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+## Environment Variables
+
+### Frontend (Public - Safe for Browser)
+
+| Variable | Description |
+|----------|-------------|
+| `VITE_SUPABASE_URL` | Supabase project URL |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Supabase anon/public key |
+| `VITE_SUPABASE_PROJECT_ID` | Supabase project ID |
+
+### Backend (Server-Only - Set in Vercel/Supabase)
+
+These are configured in Supabase Edge Functions secrets, NOT in `.env`:
+
+| Variable | Description |
+|----------|-------------|
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key |
+| `LOVABLE_API_KEY` | AI insights API key |
+
+## Project Structure
+
+```
+src/
+  components/     # UI components
+    dashboard/    # Dashboard-specific components
+    trading/      # Trading-related components
+    charts/       # Chart components
+    ui/           # shadcn/ui primitives
+  contexts/       # React contexts (Auth, etc.)
+  hooks/          # Custom React hooks
+  integrations/   # Third-party integrations
+  lib/            # Utility functions
+  pages/          # Page components
+  types/          # TypeScript types
+supabase/
+  functions/      # Edge functions
+  migrations/     # Database migrations
+```
+
+## Routes
+
+| Route | Description | Auth Required |
+|-------|-------------|---------------|
+| `/` | Main trading interface | Yes |
+| `/auth` | Login/signup | No |
+| `/dashboard` | Trading dashboard | Yes |
+| `/trade` | Execute trades | Yes |
+| `/portfolio` | Portfolio view | Yes |
+| `/alerts` | Price alerts | Yes |
+| `/config` | Trading configuration | Yes |
+| `/status` | System status & audit | Yes |
+
+## Security
+
+- All protected routes require authentication
+- API keys and secrets are never exposed to the frontend
+- Supabase Row Level Security (RLS) enforces data access
+- Kill switch provides emergency trade halt
+- Paper trading mode is default (no real funds at risk)
+
+## Risk Controls
+
+- **Emergency Stop (Kill Switch):** Immediately halts all trading
+- **Max Daily Loss:** Automatic stop when daily loss limit reached
+- **Max Risk Per Trade:** Limits position sizing
+- **Max Leverage:** Caps leverage multiplier
+- **Volatility Limit:** Blocks trades during high volatility
+
+## Manual Test Checklist
+
+Before deploying to production, verify:
+
+- [ ] `/` loads and shows the main trading interface
+- [ ] `/dashboard` loads directly (not just via navigation)
+- [ ] `/auth` allows login and signup
+- [ ] Unauthenticated users are redirected to `/auth`
+- [ ] Emergency stop banner appears when kill switch is active
+- [ ] Paper/Live mode badge is visible
+- [ ] Risk limits are displayed on dashboard
+- [ ] Mobile layout is usable
+- [ ] No console errors in browser dev tools
+- [ ] Network tab shows no exposed secrets
+
+## Limitations
+
+- Paper trading only (live trading requires additional setup)
+- AI insights require LOVABLE_API_KEY configuration
+- Real-time prices depend on external API availability
+
+## License
+
+Private - All rights reserved

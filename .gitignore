@@ -1,3 +1,41 @@
+# Dependencies
+node_modules/
 __pycache__/
 *.pyc
+
+# Environment files
+.env
+.env.local
+.env.production
+.env.development
+.env*.local
+
+# Sensitive files
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Build output
+dist/
+build/
+.output/
+.vercel/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Debug logs
 server.log
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test coverage
+coverage/
