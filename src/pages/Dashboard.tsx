@@ -5,6 +5,7 @@ import { SystemMetrics } from '@/components/trading/SystemMetrics';
 import { PnLChart } from '@/components/charts/PnLChart';
 import { DailyPnLChart } from '@/components/charts/DailyPnLChart';
 import { TradeDistributionChart } from '@/components/charts/TradeDistributionChart';
+import { MarketOverviewPanel } from '@/components/dashboard/MarketOverviewPanel';
 import { WinLossDisplay } from '@/components/charts/WinLossDisplay';
 import { useSystemHealth, useTradingConfig } from '@/hooks/useTrading';
 import { useAllRealtimeSubscriptions } from '@/hooks/useRealtimeSubscriptions';
@@ -66,6 +67,9 @@ const Dashboard = () => {
           <PnLDisplay health={health} isLoading={healthLoading} />
           <SystemMetrics health={health} isLoading={healthLoading} />
         </div>
+
+        {/* Global Market Overview (provider integration) */}
+        <MarketOverviewPanel />
 
         {/* Cumulative P&L Chart */}
         <PnLChart />
