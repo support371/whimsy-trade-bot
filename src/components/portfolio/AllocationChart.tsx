@@ -56,9 +56,9 @@ export function AllocationChart({ holdings, prices, cashBalance, isLoading }: Al
     );
   }
 
-  const CustomTooltip = ({ active, payload }: any) => {
+  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: unknown[] }) => {
     if (active && payload && payload.length) {
-      const item = payload[0];
+      const item = payload[0] as { name: string; value: number };
       const percentage = ((item.value / totalValue) * 100).toFixed(1);
       return (
         <div className="bg-popover border border-border rounded-lg p-3 shadow-lg">

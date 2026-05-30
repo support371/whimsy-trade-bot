@@ -32,13 +32,15 @@ export function usePortfolio() {
       setError(null);
       
       // Fetch or create portfolio
-      let { data: portfolioData, error: portfolioError } = await supabase
+      const { data: existingPortfolio, error: portfolioError } = await supabase
         .from('portfolios')
         .select('*')
         .eq('user_id', user.id)
         .maybeSingle();
 
       if (portfolioError) throw portfolioError;
+
+      let portfolioData = existingPortfolio;
 
       // Create default portfolio if none exists
       if (!portfolioData) {

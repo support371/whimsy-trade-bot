@@ -3,10 +3,12 @@
  * Returns true if it was a 401 error (caller should handle gracefully).
  */
 export function isAuthError(error: unknown): boolean {
-  const anyErr = error as any;
+  const anyErr = error as Record<string, unknown>;
   const status: number | undefined =
-    (typeof anyErr?.status === 'number' && anyErr.status) ||
-    (typeof anyErr?.context?.status === 'number' && anyErr.context.status);
+    (typeof anyErr?.status === 'number' ? anyErr.status : undefined) ||
+    (typeof (anyErr?.context as Record<string, unknown>)?.status === 'number'
+      ? (anyErr.context as Record<string, unknown>).status as number
+      : undefined);
 
   const message = error instanceof Error ? error.message : String(error);
 
