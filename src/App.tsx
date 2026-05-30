@@ -8,6 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { AuthBannerProvider } from "@/contexts/AuthBannerContext";
 import { AuthBanner } from "@/components/AuthBanner";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { Analytics } from "@vercel/analytics/react";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 
@@ -53,6 +54,7 @@ const App = () => (
           </AuthBannerProvider>
         </AuthProvider>
       </BrowserRouter>
+      <Analytics />
     </TooltipProvider>
   </QueryClientProvider>
 );
